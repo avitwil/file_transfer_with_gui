@@ -1,64 +1,107 @@
 
 
 ````markdown
-# Bidirectional File Transfer Application
+# Bidirectional File Transfer with GUI
 
-This is a Python GUI application for bidirectional file transfer over a network. It allows users to run a server that listens for incoming file transfers, choose a destination folder to save received files, and send files to a specified peer.
+A desktop application for sending and receiving files between two peers over a network, using a clean and modern GUI built with `customtkinter`.
+
+---
 
 ## Features
 
-- Choose a destination folder to save received files.
-- Start a server on a specified port to listen for incoming connections.
-- Set the IP address and port of a peer to send files to.
-- Send files to the configured peer.
-- Receive files from peers and save them without overwriting existing files (adds numbered suffix).
-- Display transfer progress and logs in the GUI.
-- Informational popups for successful transfers or errors.
+- Bidirectional file transfer using TCP sockets
+- Clean and responsive GUI with CustomTkinter
+- File receive with progress bar and confirmation popup
+- Selectable destination folder for received files
+- Configurable peer IP and port
+- Basic input validation and error handling
+
+---
 
 ## Requirements
 
-- Python 3.7 or higher
-- `customtkinter` library (for modern themed tkinter widgets)
+- Python 3.8 – 3.11
+- Required packages:
+  - `customtkinter`
+  - `tkinter` (built-in)
+  - `socket`, `threading`, `os` (standard library)
 
-## Installation
-
-1. Clone this repository or download the source code.
-2. Install the required dependencies:
+Install dependencies:
 
 ```bash
 pip install customtkinter
 ````
 
-## Usage
+---
 
-Run the application:
+## Running the Application
+
+### From Python source:
 
 ```bash
-python file_transfer_app.py
+python file_transfer_with_gui.py
 ```
 
-### How to use
+### Build to EXE (optional):
 
-1. Click **Choose Destination Folder** to select where incoming files will be saved.
-2. Enter the **Server Port** and click **Start Server** to begin listening for incoming file transfers.
-3. Enter the peer's IP address and port in the **Peer IP** and **Peer Port** fields and click **Set Peer**.
-4. Click **Send File to Peer** to select and send a file to the configured peer.
-5. Monitor logs and progress in the GUI window.
+Using PyInstaller:
 
-## Notes
+```bash
+pip install pyinstaller
+pyinstaller --onefile --windowed --hidden-import=customtkinter file_transfer_with_gui.py
+```
 
-* The application currently does not encrypt the file transfer data.
-* It is intended for use on trusted local networks.
-* If a received file already exists in the destination folder, the application appends a numbered suffix to the filename to avoid overwriting.
-* The server runs in a background thread and handles multiple incoming connections concurrently.
-
-## License
-
-This project is provided as-is without any warranty. Use at your own risk.
+The compiled `.exe` will be located in the `dist/` directory.
 
 ---
 
-Feel free to contribute improvements or open issues if you encounter bugs.
+## How to Use
+
+1. Run the application on two machines (or two windows).
+2. On one instance:
+
+   * Choose a destination folder.
+   * Set the server port and start the server.
+3. On the second instance:
+
+   * Enter the peer IP and port from the first machine.
+   * Click "Send File to Peer" and select a file.
+4. The file will be transferred to the destination folder of the first machine.
+
+---
+
+## Screenshot
+
+*You may place a screenshot of the GUI here:*
 
 ```
+assets/screenshot.png
+```
+
+To display it:
+
+```markdown
+![GUI Screenshot](assets/screenshot.png)
+```
+
+---
+
+## License
+
+This project is licensed under the [MIT License](LICENSE).
+
+---
+
+## Contributing
+
+Contributions are welcome. Feel free to submit pull requests or open issues for bug reports, suggestions, or improvements.
+
+---
+
+## Author
+
+Created by [avitwil](https://github.com/avitwil) — 2025
+
+```
+
 
