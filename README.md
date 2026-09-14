@@ -3,6 +3,8 @@
 ````markdown
 # Bidirectional File Transfer with GUI
 
+> ⚠️ **Security warning:** This tool transfers files over a plain, unauthenticated, unencrypted TCP connection. Use only on a trusted local network. Do not expose the listening port to the internet.
+
 A desktop application for sending and receiving files between two peers over a network, using a clean and modern GUI built with `customtkinter`.
 
 ---
@@ -29,7 +31,7 @@ A desktop application for sending and receiving files between two peers over a n
 Install dependencies:
 
 ```bash
-pip install customtkinter
+pip install -r requirements.txt
 ````
 
 ---
@@ -51,7 +53,7 @@ pip install pyinstaller
 pyinstaller --onefile --windowed --hidden-import=customtkinter file_transfer_with_gui.py
 ```
 
-The compiled `.exe` will be located in the `dist/` directory.
+The compiled `.exe` will be located in the `dist/` directory. Compiled binaries are not committed to this repository — pre-built releases, when published, are attached to [GitHub Releases](https://github.com/avitwil/file_transfer_with_gui/releases) instead.
 
 ---
 
@@ -61,7 +63,7 @@ The compiled `.exe` will be located in the `dist/` directory.
 2. On one instance:
 
    * Choose a destination folder.
-   * Set the server port and start the server.
+   * Set the server port and start the server (use "Stop Server" to shut it down again).
 3. On the second instance:
 
    * Enter the peer IP and port from the first machine.

@@ -58,6 +58,10 @@ class FileTransferApp(ctk.CTk):
         self.peer_host = "127.0.0.1"
         self.peer_port = 5001
 
+        # Reject any incoming transfer whose declared size exceeds this many bytes.
+        # Configurable by assigning a different value after construction.
+        self.max_file_size_bytes = 2 * 1024 * 1024 * 1024  # 2 GiB
+
         self.create_widgets()
 
     def create_widgets(self):
@@ -77,7 +81,10 @@ class FileTransferApp(ctk.CTk):
         self.entry_server_port.insert(0, "5001")
 
         self.btn_start_server = ctk.CTkButton(server_frame, text="Start Server", command=self.start_server)
-        self.btn_start_server.grid(row=1, column=0, columnspan=2, pady=10)
+        self.btn_start_server.grid(row=1, column=0, pady=10)
+
+        self.btn_stop_server = ctk.CTkButton(server_frame, text="Stop Server", command=self.stop_server)
+        self.btn_stop_server.grid(row=1, column=1, pady=10)
 
         server_frame.grid_columnconfigure(1, weight=1)
 
@@ -177,6 +184,23 @@ class FileTransferApp(ctk.CTk):
         thread.daemon = True
         thread.start()
 
+    def stop_server(self):
+        """
+        Stop the running server: flip the running flag and close the listening
+        socket so a blocked accept() call unblocks promptly.
+        """
+        if not self.is_running:
+            self.log("Server is not running.")
+            return
+
+        self.is_running = False
+        try:
+            if self.server_socket:
+                self.server_socket.close()
+        except OSError:
+            pass
+        self.log("Stopping server...")
+
     def server_loop(self):
         """
         Server main loop that accepts incoming connections and starts a new thread for each client.
@@ -186,7 +210,7 @@ class FileTransferApp(ctk.CTk):
                 self.server_socket.bind(("0.0.0.0", self.server_port))
                 self.server_socket.listen(5)
                 self.is_running = True
-                self.log(f"Server listening on port {self.server_port}")
+                self.after(0, self.log, f"Server listening on port {self.server_port}")
 
                 while self.is_running:
                     self.server_socket.settimeout(1.0)
@@ -197,8 +221,14 @@ class FileTransferApp(ctk.CTk):
                         client_thread.start()
                     except socket.timeout:
                         continue
+                    except OSError:
+                        # Socket was closed (e.g. by Stop Server) while accept() was blocked.
+                        break
             except Exception as e:
-                self.log(f"Server error: {e}")
+                self.after(0, self.log, f"Server error: {e}")
+            finally:
+                self.is_running = False
+                self.after(0, self.log, "Server stopped.")
 
     def handle_client(self, client_socket, address):
         """
@@ -209,14 +239,23 @@ class FileTransferApp(ctk.CTk):
             address: The address tuple of the client.
         """
         try:
-            self.log(f"Connected with {address}")
+            self.after(0, self.log, f"Connected with {address}")
             received = client_socket.recv(BUFFER_SIZE).decode("utf-8")
             filename, filesize = received.split(SEPARATOR)
             filename = os.path.basename(filename)
             filesize = int(filesize)
 
+            if filesize > self.max_file_size_bytes:
+                self.after(
+                    0,
+                    self.log,
+                    f"Rejected '{filename}': declared size {filesize} bytes exceeds the "
+                    f"configured maximum of {self.max_file_size_bytes} bytes.",
+                )
+                return
+
             if not self.dest_folder:
-                self.log("No destination folder set.")
+                self.after(0, self.log, "No destination folder set.")
                 return
 
             save_path = os.path.join(self.dest_folder, filename)
@@ -238,12 +277,12 @@ class FileTransferApp(ctk.CTk):
                     progress_value = total_received / filesize
                     self.progress.after(0, self.progress.set, progress_value)
 
-            self.log(f"File saved to: {save_path}")
+            self.after(0, self.log, f"File saved to: {save_path}")
             self.progress.after(0, self.progress.set, 0)
             self.progress.after(0, lambda: InfoPopup(self, f"File received and saved:\n{filename}"))
 
         except Exception as e:
-            self.log(f"Error handling client {address}: {e}")
+            self.after(0, self.log, f"Error handling client {address}: {e}")
         finally:
             client_socket.close()
 
@@ -261,8 +300,8 @@ class FileTransferApp(ctk.CTk):
                 filesize = os.path.getsize(file_path)
                 filename = os.path.basename(file_path)
 
-                self.log(f"Connecting to peer {self.peer_host}:{self.peer_port}...")
-                self.log("Sending file...")
+                self.after(0, self.log, f"Connecting to peer {self.peer_host}:{self.peer_port}...")
+                self.after(0, self.log, "Sending file...")
 
                 with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
                     s.settimeout(5.0)
@@ -276,15 +315,15 @@ class FileTransferApp(ctk.CTk):
                                 break
                             s.sendall(bytes_read)
 
-                self.log(f"File '{filename}' sent successfully.")
+                self.after(0, self.log, f"File '{filename}' sent successfully.")
                 self.progress.after(0, lambda: InfoPopup(self, f"File '{filename}' sent successfully."))
 
             except socket.timeout:
-                self.log("Connection timed out. Peer is not responding.")
+                self.after(0, self.log, "Connection timed out. Peer is not responding.")
                 self.progress.after(0, lambda: InfoPopup(self, "Connection timed out.\nPeer is not responding."))
 
             except Exception as e:
-                self.log(f"Error sending file: {e}")
+                self.after(0, self.log, f"Error sending file: {e}")
                 self.progress.after(0, lambda: InfoPopup(self, f"Error sending file:\n{e}"))
 
             finally:

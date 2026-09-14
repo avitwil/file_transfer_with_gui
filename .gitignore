@@ -1,0 +1,12 @@
+# Compiled/packaged binaries (distribute these via GitHub Releases instead)
+*.exe
+dist/
+build/
+*.spec
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+venv/
+*.egg-info/
